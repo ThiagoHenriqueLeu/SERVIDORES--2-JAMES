@@ -4,6 +4,7 @@
 
 Este projeto utiliza PostgreSQL como banco de dados.
 
+
 🧰 Pré-requisitos
 PostgreSQL instalado
 (Opcional) pgAdmin
@@ -22,14 +23,16 @@ ALTER ROLE catalogo_user SUPERUSER;
 
 -- Conectar no banco
 \c catalogo;
+
+
 🧱 2. Criar tabelas (SQL COMPLETO)
--- 🔥 TABELA DE CATEGORIA
+--  TABELA DE CATEGORIA
 CREATE TABLE tb_categoria (
     id SERIAL PRIMARY KEY,
     nome VARCHAR(100) NOT NULL
 );
 
--- 🔥 TABELA DE PRODUTO
+--  TABELA DE PRODUTO
 CREATE TABLE tb_produto (
     id_produto SERIAL PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
@@ -42,6 +45,8 @@ CREATE TABLE tb_produto (
         REFERENCES tb_categoria(id)
         ON DELETE RESTRICT
 );
+
+
 🧪 3. Dados iniciais (opcional)
 INSERT INTO tb_categoria (nome) VALUES 
 ('Eletrônicos'),
@@ -52,6 +57,8 @@ INSERT INTO tb_produto (nome, valor, data_cadastro, categoria_id) VALUES
 ('Notebook', 3500.00, NOW(), 1),
 ('Arroz', 25.00, NOW(), 2),
 ('Camiseta', 50.00, NOW(), 3);
+
+
 ⚙️ 4. Configurar application.properties
 spring.datasource.url=jdbc:postgresql://localhost:5432/catalogo
 spring.datasource.username=catalogo_user
@@ -64,10 +71,14 @@ spring.jpa.hibernate.ddl-auto=update
 
 spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.format_sql=true
+
+
 ▶️ 5. Rodar o projeto
 mvn spring-boot:run
 
 ou execute pela sua IDE.
+
+
 
 🌐 6. Acessar sistema
 
