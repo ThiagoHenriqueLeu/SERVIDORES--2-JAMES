@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-br"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo de Produtos</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #e9ecef, #dee2e6);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .bg-dark-blue {
+            background: linear-gradient(135deg, #0d1b2a, #1b263b) !important;
+        }
+
+        .navbar {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        }
+
+        .card {
+            border: none;
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+            transition: 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+        }
+
+        .btn {
+            border-radius: 8px;
+            transition: 0.3s;
+        }
+
+        .btn:hover {
+            transform: scale(1.03);
+        }
+
+        .btn-dark-blue {
+            background: linear-gradient(135deg, #0d1b2a, #1b263b);
+            color: #fff;
+            border: none;
+        }
+
+        .btn-dark-blue:hover {
+            background: linear-gradient(135deg, #1b263b, #415a77);
+            color: #fff;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #198754, #20c997);
+            border: none;
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #157347, #198754);
+        }
+
+        .form-control {
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .form-control:focus {
+            border-color: #1b263b;
+            box-shadow: 0 0 0 0.2rem rgba(27,38,59,0.25);
+        }
+
+        .table {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .table-dark-blue {
+            background: linear-gradient(135deg, #0d1b2a, #1b263b);
+            color: #fff;
+        }
+
+        .table tbody tr {
+            transition: 0.2s;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f1f3f5;
+            transform: scale(1.01);
+        }
+
+        .table-danger {
+            background-color: #f8d7da !important;
+        }
+
+        .alert {
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        /* Botões de ação */
+        .btn-sm {
+            padding: 6px 10px;
+            font-size: 0.85rem;
+        }
+
+        /* Espaçamento melhor */
+        .card-body {
+            padding: 25px;
+        }
+
+        /* Ajuste visual da busca */
+        form.d-flex input {
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+
+<nav class="navbar navbar-dark bg-dark-blue mb-4">
+    <div class="container d-flex justify-content-between">
+
+        <a class="navbar-brand" href="/produtos">
+            FATEC - Gerenciador de Catálogo
+        </a>
+
+        <div>
+            <a sec:authorize="!isAuthenticated()"
+               href="/login"
+               class="btn btn-outline-light me-2">
+                Entrar
+            </a>
+
+            <form sec:authorize="isAuthenticated()"
+                  th:action="@{/logout}"
+                  method="post"
+                  style="display:inline;">
+                <button type="submit" class="btn btn-danger">
+                    Sair
+                </button>
+            </form>
+        </div>
+
+    </div>
+</nav>
+
+<div class="container">
+    <div class="card shadow">
+
+        <!-- 🔥 BOTÕES -->
+        <div sec:authorize="hasRole('ADMIN')" class="m-3 d-flex gap-2">
+
+            <a href="/produtos/novo" class="btn btn-success">
+                Novo Produto
+            </a>
+
+            <a href="/categorias" class="btn btn-dark-blue">
+                Categorias
+            </a>
+
+        </div>
+
+        <div class="card-body">
+
+            <!-- 🔎 BUSCA -->
+            <div class="mb-3">
+                <form method="get" action="/produtos" class="d-flex">
+                    <input type="text" name="nome" class="form-control me-2"
+                           placeholder="Buscar produto pelo nome..."
+                           th:value="${param.nome}">
+                    <button type="submit" class="btn btn-dark-blue">Buscar</button>
+                </form>
+            </div>
+
+            <!-- 📋 TABELA -->
+            <table class="table table-hover">
+                <thead class="table-dark-blue">
+                <tr>
+                    <th>ID</th>
+                    <th>Nome do Produto</th>
+                    <th>Categoria</th> <!-- 🔥 NOVO -->
+                    <th>Preço (R$)</th>
+                    <th>Data de Cadastro</th>
+                    <th class="text-center">Ações</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                <tr th:each="p : ${produtos}"
+                    th:classappend="${p.valor.doubleValue() > 1000} ? 'table-danger'">
+
+                    <td th:text="${p.idProduto}"></td>
+                    <td th:text="${p.nome}"></td>
+
+                    <!-- 🔥 CATEGORIA COM SEGURANÇA -->
+                    <td th:text="${p.categoria != null ? p.categoria.nome : 'Sem categoria'}"></td>
+
+                    <td th:text="${#numbers.formatDecimal(p.valor, 1, 'POINT', 2, 'COMMA')}"></td>
+                    <td th:text="${#temporals.format(p.dataCadastro, 'dd/MM/yyyy HH:mm')}"></td>
+
+                    <td class="text-center">
+
+                        <a th:href="@{/produtos/editar/{id}(id=${p.idProduto})}"
+                           class="btn btn-sm btn-dark-blue">
+                            Editar
+                        </a>
+
+                        <a sec:authorize="hasRole('ADMIN')"
+                           th:href="@{/produtos/excluir/{id}(id=${p.idProduto})}"
+                           class="btn btn-sm btn-danger"
+                           onclick="return confirm('Tem certeza que deseja remover este produto?')">
+                            Excluir
+                        </a>
+
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+            <!-- 📭 SEM PRODUTOS -->
+            <div th:if="${#lists.isEmpty(produtos)}" class="alert alert-info text-center">
+                Nenhum produto cadastrado no momento.
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
