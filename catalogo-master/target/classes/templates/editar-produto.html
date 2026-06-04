@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-br"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Produto</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/app.css}" rel="stylesheet">
+</head>
+
+<body>
+<div sec:authorize="hasRole('ADMIN')">
+    <nav class="navbar navbar-dark app-navbar mb-4">
+        <div class="container">
+            <a class="navbar-brand" th:href="@{/produtos}">FATEC Catalogo</a>
+        </div>
+    </nav>
+
+    <main class="container app-shell">
+        <div class="panel form-panel mx-auto">
+            <div class="panel-header">
+                <div>
+                    <h2 class="page-title">Editar Produto</h2>
+                    <p class="page-subtitle">Atualize preco, categoria ou quantidade em estoque.</p>
+                </div>
+            </div>
+
+            <div class="panel-body">
+                <form id="produtoForm" th:action="@{/produtos/salvar}" th:object="${produto}" method="post">
+                    <input type="hidden" th:field="*{idProduto}">
+                    <input type="hidden"
+                           id="valorOriginal"
+                           th:value="${produto.valor}">
+                    <input type="hidden"
+                           id="quantidadeOriginal"
+                           th:value="${produto.quantidade}">
+
+                    <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger">
+                        <p class="mb-0" th:each="err : ${#fields.globalErrors()}" th:text="${err}"></p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Nome do Produto</label>
+                        <input type="text"
+                               th:field="*{nome}"
+                               class="form-control"
+                               th:classappend="${#fields.hasErrors('nome')} ? 'is-invalid' : ''">
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('nome')}" th:errors="*{nome}"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Preco (R$)</label>
+                        <input type="number"
+                               step="0.01"
+                               th:field="*{valor}"
+                               id="valor"
+                               class="form-control"
+                               th:classappend="${#fields.hasErrors('valor')} ? 'is-invalid' : ''">
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('valor')}" th:errors="*{valor}"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Quantidade em Estoque</label>
+                        <input type="number"
+                               min="0"
+                               th:field="*{quantidade}"
+                               id="quantidade"
+                               class="form-control"
+                               th:classappend="${#fields.hasErrors('quantidade')} ? 'is-invalid' : ''">
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('quantidade')}" th:errors="*{quantidade}"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Categoria</label>
+                        <select th:field="*{categoria}"
+                                class="form-select"
+                                th:classappend="${#fields.hasErrors('categoria')} ? 'is-invalid' : ''">
+                            <option value="" disabled>Selecione...</option>
+                            <option th:each="cat : ${categorias}"
+                                    th:value="${cat.idCategoria}"
+                                    th:text="${cat.nome}">
+                            </option>
+                        </select>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('categoria')}" th:errors="*{categoria}"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Motivo da ultima alteracao</label>
+                        <textarea id="motivoAlteracao"
+                                  th:field="*{motivoAlteracao}"
+                                  class="form-control"
+                                  rows="3"
+                                  placeholder="Opcional. Use para justificar alteracoes importantes."
+                                  th:classappend="${#fields.hasErrors('motivoAlteracao')} ? 'is-invalid' : ''"></textarea>
+                        <div class="invalid-feedback"
+                             th:if="${#fields.hasErrors('motivoAlteracao')}"
+                             th:errors="*{motivoAlteracao}"></div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a th:href="@{/produtos}" class="btn btn-outline-secondary">Cancelar</a>
+                        <button type="button" id="btnSalvarProduto" class="btn btn-primary">Salvar Alteracoes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal fade" id="motivoModal" tabindex="-1" aria-labelledby="motivoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="motivoModalLabel">Motivo da alteracao</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">
+                        Voce alterou o preco ou o estoque. Se quiser, informe um motivo para aparecer na auditoria.
+                    </p>
+                    <label for="motivoModalTexto" class="form-label">Motivo</label>
+                    <textarea id="motivoModalTexto"
+                              class="form-control"
+                              rows="4"
+                              placeholder="Ex: Reajuste de fornecedor, entrada de mercadoria, baixa no estoque..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="salvarSemMotivo" class="btn btn-outline-primary">Salvar sem motivo</button>
+                    <button type="button" id="confirmarMotivo" class="btn btn-primary">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const form = document.getElementById('produtoForm');
+    const botaoSalvar = document.getElementById('btnSalvarProduto');
+    const campoValor = document.getElementById('valor');
+    const campoQuantidade = document.getElementById('quantidade');
+    const valorOriginal = document.getElementById('valorOriginal').value;
+    const quantidadeOriginal = document.getElementById('quantidadeOriginal').value;
+    const campoMotivo = document.getElementById('motivoAlteracao');
+    const modalTexto = document.getElementById('motivoModalTexto');
+    const motivoModal = new bootstrap.Modal(document.getElementById('motivoModal'));
+
+    function normalizarValor(valor) {
+        const numero = Number.parseFloat(String(valor).replace(',', '.'));
+        return Number.isNaN(numero) ? '' : numero.toFixed(2);
+    }
+
+    function precoOuEstoqueMudou() {
+        const valorMudou = normalizarValor(campoValor.value) !== normalizarValor(valorOriginal);
+        const quantidadeMudou = String(campoQuantidade.value) !== String(quantidadeOriginal);
+
+        return valorMudou || quantidadeMudou;
+    }
+
+    botaoSalvar.addEventListener('click', () => {
+        if (!precoOuEstoqueMudou()) {
+            form.submit();
+            return;
+        }
+
+        modalTexto.value = campoMotivo.value.trim();
+        motivoModal.show();
+    });
+
+    document.getElementById('confirmarMotivo').addEventListener('click', () => {
+        campoMotivo.value = modalTexto.value.trim();
+        motivoModal.hide();
+        form.submit();
+    });
+
+    document.getElementById('salvarSemMotivo').addEventListener('click', () => {
+        campoMotivo.value = '';
+        motivoModal.hide();
+        form.submit();
+    });
+</script>
+</body>
+</html>
