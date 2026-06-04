@@ -1,65 +1,48 @@
 package br.com.fatec.catalogo.controllers;
 
 import br.com.fatec.catalogo.models.CategoriaModel;
-import br.com.fatec.catalogo.repositories.CategoriaRepository;
-import br.com.fatec.catalogo.repositories.ProdutoRepository;
+import br.com.fatec.catalogo.services.CategoriaService;
+
+import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
 @RequestMapping("/categorias")
 public class CategoriaController {
 
     @Autowired
-    private CategoriaRepository repository;
+    private CategoriaService categoriaService;
 
-    @Autowired
-    private ProdutoRepository produtoRepository; // ✅ AGORA NO LUGAR CERTO
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/novo")
+    public String exibirForm(Model model) {
 
-    // 🔥 TELA
-    @GetMapping
-    public String listar(Model model) {
-        model.addAttribute("categorias", repository.findAll());
         model.addAttribute("categoria", new CategoriaModel());
-        return "categorias";
+
+        return "cadastro-categoria";
     }
 
-    // 🔥 SALVAR FORM
-    @PostMapping("/salvar-form")
-    public String salvarForm(@ModelAttribute CategoriaModel categoria) {
-        repository.save(categoria);
-        return "redirect:/categorias";
-    }
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/salvar")
+    public String salvar(
+            @Valid CategoriaModel categoria,
+            BindingResult result) {
 
-    // 🔥 EDITAR
-    @GetMapping("/editar/{id}")
-    public String editar(@PathVariable Long id, Model model) {
-        model.addAttribute("categorias", repository.findAll());
-        model.addAttribute("categoria", repository.findById(id).orElse(new CategoriaModel()));
-        return "categorias";
-    }
+        if (result.hasErrors()) {
 
-    // 🔥 EXCLUIR COM VALIDAÇÃO
-    @GetMapping("/excluir/{id}")
-    public String excluir(@PathVariable Long id) {
-
-        boolean temProduto = produtoRepository.existsByCategoriaId(id);
-
-        if (temProduto) {
-            return "redirect:/categorias?erro=temProduto";
+            return "cadastro-categoria";
         }
 
-        repository.deleteById(id);
-        return "redirect:/categorias";
-    }
+        categoriaService.salvar(categoria);
 
-    // 🔥 API (modal do produto)
-    @PostMapping("/salvar")
-    @ResponseBody
-    public CategoriaModel salvarApi(@RequestBody CategoriaModel categoria) {
-        return repository.save(categoria);
+        return "redirect:/produtos";
     }
 }
